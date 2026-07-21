@@ -1,17 +1,43 @@
-<!-- HTML que adiciona o p5js -->
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <script src="https://cdn.jsdelivr.net/npm/p5@1.11.13/lib/p5.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/p5@1.11.13/lib/addons/p5.sound.min.js"></script>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beach Paddle Paradise</title>
+    
+    <style>
+        /* Remove as margens padrão do navegador */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
 
+        /* Centraliza o canvas e define a cor de fundo */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            
+            /* Tom de azul inspirado no céu da tela inicial. 
+               Se preferir a cor da areia, use: background-color: #eecf90; */
+            background-color: #6ec8eb; 
+        }
 
-        <link rel="stylesheet" type="text/css" href="style.css">
-        <meta charset="UTF-8">
+        /* Estiliza a tela do jogo (o canvas gerado pelo p5.js) */
+        canvas {
+            box-shadow: 0px 15px 35px rgba(0, 0, 0, 0.3); /* Sombra elegante */
+            border-radius: 4px; /* Bordas levemente arredondadas */
+            
+            /* Garante que a pixel art não fique embaçada ao renderizar */
+            image-rendering: pixelated; 
+        }
+    </style>
 </head>
 <body>
-    <main>
-    </main>
+    <!-- Importação das bibliotecas e do código do jogo -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.13/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.13/lib/addons/p5.sound.min.js"></script>
     <script src="sketch.js"></script>
 </body>
 </html>

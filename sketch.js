@@ -159,7 +159,7 @@ class ImageButton {
     draw() {
         if (this.isHovered()) {
             push(); fill(255, 255, 255, 60); noStroke(); rectMode(CENTER);
-            rect(this.x, this.y, this.w + 10, this.h + 10, 8); pop();
+            rect(this.x, this.y, this.w + 1 , this.h + 10, 8); pop();
             cursor(HAND);
         }
         if (this.img) {
@@ -315,7 +315,7 @@ function drawGameOverScreen() {
 
     // Escolhe a mensagem
     let message = "DRAW!";
-    if (gameState.playerScore > gameState.computerScore) message = "YOU WIN!";
+    if (gameState.playerScore > gameState.computerScore) message = "YOU WON!";
     else if (gameState.computerScore > gameState.playerScore) message = "YOU LOSE!";
 
     drawTextCentered(message, width / 2, height / 2 - 60, 6);
