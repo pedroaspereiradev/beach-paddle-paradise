@@ -59,9 +59,11 @@ const pixelFont = {
 class Paddle {
     constructor(x, imageRef) {
         this.x = x;
-        this.width = 10;
-        this.height = 60;
-        this.y = height / 2 - this.height / 2; // Centers the paddle vertically
+        this.width = 14; 
+        this.height = 84; 
+        
+        // Centers the paddle vertically
+        this.y = height / 2 - this.height / 2; 
         this.img = imageRef;
     }
     
@@ -300,17 +302,20 @@ function preload() {
 }
 
 function setup() {
-    createCanvas(700, 400);
+    // Resolution: 980x560
+    createCanvas(980, 560);
     
-    ball = new Ball(40);
-    player = new PlayerPaddle(30, assets.imageRacketPlayer);
-    computer = new ComputerPaddle(width - 40, assets.imageRacketComputer);
+    // Scale ball diameter
+    ball = new Ball(56); 
+    player = new PlayerPaddle(42, assets.imageRacketPlayer);
+    computer = new ComputerPaddle(width - 56, assets.imageRacketComputer);
     
-    // Setup UI buttons
-    btnStartGame = new Hitbox(260, 285, 160, 60); 
-    btnOptions = new Hitbox(440, 285, 160, 60);
-    btnReplay = new ImageButton(width / 2, height / 2 + 60, 160, 60, assets.imageReplay);
-    btnPause = new PausePlayButton(width - 35, 35, 40); // Top-right corner
+    // Parameters: x (center), y (center), width, height
+    btnStartGame = new Hitbox(364, 399, 224, 84); 
+    btnOptions = new Hitbox(616, 399, 224, 84);
+
+    btnReplay = new ImageButton(width / 2, height / 2 + 84, 224, 84, assets.imageReplay);
+    btnPause = new PausePlayButton(width - 49, 49, 56); 
 }
 
 // The core game loop that delegates drawing based on the state machine
