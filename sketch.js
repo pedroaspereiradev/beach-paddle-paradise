@@ -28,6 +28,7 @@ const gameState = {
 // Drawn dynamically via code to ensure perfect pixel scaling without blur.
 
 const pixelFont = {
+    // Numbers and Symbols
     '0': ['111', '101', '101', '101', '111'], '1': ['010', '110', '010', '010', '111'],
     '2': ['111', '001', '111', '100', '111'], '3': ['111', '001', '111', '001', '111'],
     '4': ['101', '101', '111', '001', '001'], '5': ['111', '100', '111', '001', '111'],
@@ -35,7 +36,7 @@ const pixelFont = {
     '8': ['111', '101', '111', '101', '111'], '9': ['111', '101', '111', '001', '111'],
     '-': ['000', '000', '111', '000', '000'], ':': ['000', '010', '000', '010', '000'],
     
-    // Letters used for UI texts (Game Over, Pause)
+    // Letters used for UI texts (Game Over and Pause)
     'P': ['111', '101', '111', '100', '100'], 'Y': ['101', '101', '111', '010', '010'], 
     'O': ['111', '101', '101', '101', '111'], 'U': ['101', '101', '101', '101', '111'], 
     'W': ['101', '101', '101', '111', '101'], 'I': ['111', '010', '010', '010', '111'], 
@@ -43,10 +44,11 @@ const pixelFont = {
     'S': ['111', '100', '111', '001', '111'], 'E': ['111', '100', '111', '100', '111'], 
     'D': ['110', '101', '101', '101', '110'], 'R': ['110', '101', '110', '101', '101'], 
     'A': ['111', '101', '111', '101', '101'], '!': ['010', '010', '010', '000', '010'],
-
-    // Play/Pause icons
-    '>': ['100', '110', '111', '110', '100'], // Play
-    '|': ['101', '101', '101', '101', '101']  // Pause
+    
+    // UI Icons
+    '>': ['100', '110', '111', '110', '100'], // Play Icon (Triangle)
+    '|': ['101', '101', '101', '101', '101'], // Pause Icon (Two bars)
+    '#': ['000', '111', '111', '111', '000']  // Stop Icon (Solid Square)
 };
 
 // ==========================================
@@ -59,6 +61,8 @@ const pixelFont = {
 class Paddle {
     constructor(x, imageRef) {
         this.x = x;
+        
+        // Scaled up by 1.4x (original was 10x60)
         this.width = 14; 
         this.height = 84; 
         
@@ -246,9 +250,6 @@ class ImageButton {
 }
 
 /**
- * Pause/Play toggle button drawn entirely with code (p5.js primitives).
- */
-/**
  * Pause/Play toggle button drawn using the custom pixel font system.
  */
 class PausePlayButton {
@@ -260,25 +261,61 @@ class PausePlayButton {
                mouseY > this.y - this.size / 2 && mouseY < this.y + this.size / 2;
     }
     draw() {
-        // Visual feedback for hover state (semi-transparent white overlay)
+        // Visual feedback on hover
         if (this.isHovered()) {
             push(); fill(255, 255, 255, 60); noStroke(); rectMode(CENTER);
             rect(this.x, this.y, this.size, this.size, 6); pop();
             cursor(HAND);
         }
         
-        // Define the character to draw based on the current pause state
+        // Decide which character to render (Play or Pause icon)
         const iconChar = gameState.isPaused ? '>' : '|';
-        const iconScale = 4; // Icon size
+        const iconScale = 4; 
         
-        // Calculate the offset to center the character on the button
-        // The font has 3 blocks of width and 5 blocks of height
+        // Calculate offset to perfectly center the character inside the button
         const charWidth = 3 * iconScale;
         const charHeight = 5 * iconScale;
         const startX = this.x - charWidth / 2;
         const startY = this.y - charHeight / 2;
         
-        // Draw the icon using our pixelated renderer with a black border!
+        drawPixelCharWithBorder(iconChar, startX, startY, iconScale);
+    }
+}
+
+/**
+ * Stop button drawn using the custom pixel font system.
+ * Returns the player to the Start Screen.
+ */
+/**
+ * Stop button drawn using the custom pixel font system.
+ * Returns the player to the Start Screen.
+ */
+class StopButton {
+    constructor(x, y, size) {
+        this.x = x; this.y = y; this.size = size;
+    }
+    isHovered() {
+        return mouseX > this.x - this.size / 2 && mouseX < this.x + this.size / 2 && 
+               mouseY > this.y - this.size / 2 && mouseY < this.y + this.size / 2;
+    }
+    draw() {
+        // Visual feedback on hover (slightly red for the stop action)
+        if (this.isHovered()) {
+            push(); fill(255, 100, 100, 80); noStroke(); rectMode(CENTER);
+            rect(this.x, this.y, this.size, this.size, 6); pop();
+            cursor(HAND);
+        }
+        
+        const iconChar = '#'; // Our custom stop square icon
+        
+        // Increased scale from 4 to 5.5 so the square looks bigger and matches the Pause weight!
+        const iconScale = 5.5; 
+        
+        const charWidth = 3 * iconScale;
+        const charHeight = 5 * iconScale;
+        const startX = this.x - charWidth / 2;
+        const startY = this.y - charHeight / 2;
+        
         drawPixelCharWithBorder(iconChar, startX, startY, iconScale);
     }
 }
@@ -288,7 +325,7 @@ class PausePlayButton {
 // ==========================================
 
 let ball, player, computer;
-let btnStartGame, btnOptions, btnReplay, btnPause;
+let btnStartGame, btnOptions, btnReplay, btnPause, btnStop;
 
 function preload() {
     assets.imageBall = loadImage('assets/bola.png');
@@ -302,20 +339,30 @@ function preload() {
 }
 
 function setup() {
+    // Increase canvas size by 40% (maintaining the exact 1.75 aspect ratio of the background)
     // Resolution: 980x560
     createCanvas(980, 560);
     
-    // Scale ball diameter
+    // Scale ball diameter by 1.4x (original was 40)
     ball = new Ball(56); 
+    
+    // Adjust paddle positions based on the new boundaries
     player = new PlayerPaddle(42, assets.imageRacketPlayer);
     computer = new ComputerPaddle(width - 56, assets.imageRacketComputer);
     
+    // Recalculated hitboxes for the new 980x560 resolution
     // Parameters: x (center), y (center), width, height
     btnStartGame = new Hitbox(364, 399, 224, 84); 
     btnOptions = new Hitbox(616, 399, 224, 84);
-
+    
+    // These buttons use 'width' and 'height' dynamically, just adjusting their size and offsets
     btnReplay = new ImageButton(width / 2, height / 2 + 84, 224, 84, assets.imageReplay);
+    
+    // UI Buttons in the top-right corner
     btnPause = new PausePlayButton(width - 49, 49, 56); 
+    
+    // Moved closer to the Pause button (from width - 119 to width - 110)
+    btnStop = new StopButton(width - 110, 49, 56); 
 }
 
 // The core game loop that delegates drawing based on the state machine
@@ -343,7 +390,18 @@ function mousePressed() {
             if (assets.pointSound) assets.pointSound.play();
         }
     } else if (gameState.screen === 'PLAYING') {
-        if (btnPause.isHovered()) {
+        if (btnStop.isHovered()) {
+            // Hard reset and return to Start Screen
+            gameState.screen = 'START';
+            gameState.isPaused = false;
+            gameState.transitionAlpha = 255; // Triggers the beautiful fade-in effect again
+            
+            // Reset scores so the next game starts fresh
+            gameState.playerScore = 0;
+            gameState.computerScore = 0;
+            
+            if (assets.pointSound) assets.pointSound.play();
+        } else if (btnPause.isHovered()) {
             gameState.isPaused = !gameState.isPaused;
             
             if (gameState.isPaused) {
@@ -457,8 +515,9 @@ function drawGameScreen() {
         drawTextCentered("PAUSED", width / 2, height / 2 - 25, 6);
     }
 
-    // Draw pause button on top of everything
+    // Draw UI buttons on top of everything (both gameplay and pause overlay)
     btnPause.draw();
+    btnStop.draw(); 
 }
 
 function drawGameOverScreen() {
@@ -486,7 +545,12 @@ function drawGameEnvironment() {
     
     player.draw();
     computer.draw();
-    ball.draw();
+    
+    // Only render the ball when the game is actually running or has finished
+    // This prevents the ball from showing up during the 3.. 2.. 1 countdown!
+    if (gameState.screen === 'PLAYING' || gameState.screen === 'GAME_OVER') {
+        ball.draw();
+    }
 }
 
 // ==========================================
