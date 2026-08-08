@@ -37,36 +37,50 @@ class Paddle {
 const PLAYER_KEYBOARD_SPEED = 7;
 
 /**
- * Player Paddle: Controlled by the mouse Y position, or the Up/Down arrow
- * keys and W/S as an alternative. Keyboard input takes over for the frame
- * it's held so the two schemes never fight over the paddle's position.
+ * Player 1 Paddle. In single-player, controlled by the mouse Y position, or
+ * the Up/Down arrow keys and W/S as an alternative - keyboard input takes
+ * over for the frame it's held so the two schemes never fight over the
+ * paddle's position. In two-player mode the mouse is disabled and only W/S
+ * work, since Up/Down are reserved for Player 2.
  */
 class PlayerPaddle extends Paddle {
     update() {
-        const movingUp = keyIsDown(UP_ARROW) || keyIsDown(87); // W
-        const movingDown = keyIsDown(DOWN_ARROW) || keyIsDown(83); // S
-
-        if (movingUp || movingDown) {
-            if (movingUp) this.y -= PLAYER_KEYBOARD_SPEED;
-            if (movingDown) this.y += PLAYER_KEYBOARD_SPEED;
+        if (gameState.twoPlayerMode) {
+            if (keyIsDown(87)) this.y -= PLAYER_KEYBOARD_SPEED; // W
+            if (keyIsDown(83)) this.y += PLAYER_KEYBOARD_SPEED; // S
         } else {
-            this.y = mouseY - this.height / 2;
+            const movingUp = keyIsDown(UP_ARROW) || keyIsDown(87);
+            const movingDown = keyIsDown(DOWN_ARROW) || keyIsDown(83);
+
+            if (movingUp || movingDown) {
+                if (movingUp) this.y -= PLAYER_KEYBOARD_SPEED;
+                if (movingDown) this.y += PLAYER_KEYBOARD_SPEED;
+            } else {
+                this.y = mouseY - this.height / 2;
+            }
         }
         this.constrainBounds();
     }
 }
 
 /**
- * AI Paddle: Tracks the ball with a constrained maximum speed.
+ * Right-side Paddle. Doubles as either the AI opponent (single-player,
+ * tracking the ball with a constrained max speed) or Player 2 (two-player
+ * mode, controlled with the Up/Down arrow keys) depending on gameState.twoPlayerMode.
  */
-class ComputerPaddle extends Paddle {
+class OpponentPaddle extends Paddle {
     update(ball) {
-        const { reaction, maxSpeed } = AI_DIFFICULTY[settings.aiDifficulty];
-        const targetY = ball.y - this.height / 2; // AI tries to hit with the center of the paddle
-        const distance = targetY - this.y;
+        if (gameState.twoPlayerMode) {
+            if (keyIsDown(UP_ARROW)) this.y -= PLAYER_KEYBOARD_SPEED;
+            if (keyIsDown(DOWN_ARROW)) this.y += PLAYER_KEYBOARD_SPEED;
+        } else {
+            const { reaction, maxSpeed } = AI_DIFFICULTY[settings.aiDifficulty];
+            const targetY = ball.y - this.height / 2; // AI tries to hit with the center of the paddle
+            const distance = targetY - this.y;
 
-        // Limits the AI speed to make it beatable, tuned by the Options difficulty setting
-        if (abs(distance) > 2) this.y += constrain(distance * reaction, -maxSpeed, maxSpeed);
+            // Limits the AI speed to make it beatable, tuned by the Options difficulty setting
+            if (abs(distance) > 2) this.y += constrain(distance * reaction, -maxSpeed, maxSpeed);
+        }
         this.constrainBounds();
     }
 }

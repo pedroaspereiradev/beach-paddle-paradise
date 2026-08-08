@@ -5,9 +5,10 @@
 const assets = {}; // Stores all images and sounds loaded in preload()
 const gameState = {
     // State Machine: Controls which screen is currently being rendered
-    screen: 'START', // States: 'START', 'TRANSITION', 'COUNTDOWN', 'PLAYING', 'GAME_OVER'
+    screen: 'START', // States: 'START', 'MODE_SELECT', 'TRANSITION', 'COUNTDOWN', 'PLAYING', 'GAME_OVER'
 
     // Game variables
+    twoPlayerMode: false, // false = vs AI (right paddle is computer-controlled), true = local 2-player
     playerScore: 0,
     computerScore: 0,
 
@@ -37,8 +38,8 @@ const settings = {
     aiDifficulty: 'MEDIUM' // One of: 'EASY', 'MEDIUM', 'HARD'
 };
 
-// Tuning knobs consumed by ComputerPaddle.update() - reaction is the steering
-// factor applied to the distance-to-ball, maxSpeed caps pixels moved per frame.
+// Tuning knobs consumed by OpponentPaddle.update() in AI mode - reaction is the
+// steering factor applied to the distance-to-ball, maxSpeed caps pixels moved per frame.
 const AI_DIFFICULTY = {
     EASY: { reaction: 0.08, maxSpeed: 3 },
     MEDIUM: { reaction: 0.12, maxSpeed: 4 }, // Matches the original, pre-Options behavior

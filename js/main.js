@@ -5,6 +5,7 @@
 let ball, player, computer;
 let btnStartGame, btnOptions, btnReplay, btnPause, btnStop;
 let btnSound, btnEasy, btnMedium, btnHard, btnOptionsBack;
+let btn1Player, btn2Players, btnModeBack;
 
 function preload() {
     assets.imageBall = loadImage('assets/bola.png');
@@ -29,8 +30,9 @@ function setup() {
     ball = new Ball(56);
 
     // Adjust paddle positions based on the new boundaries
+    // `computer` is either AI-controlled or Player 2, depending on gameState.twoPlayerMode
     player = new PlayerPaddle(42, assets.imageRacketPlayer);
-    computer = new ComputerPaddle(width - 56, assets.imageRacketComputer);
+    computer = new OpponentPaddle(width - 56, assets.imageRacketComputer);
 
     // Recalculated hitboxes for the new 980x560 resolution
     // Parameters: x (center), y (center), width, height
@@ -52,6 +54,11 @@ function setup() {
     btnMedium = new TextButton(width / 2, 350, 220, 70, 'MEDIUM', 3);
     btnHard = new TextButton(width / 2 + 260, 350, 220, 70, 'HARD', 3);
     btnOptionsBack = new TextButton(width / 2, 470, 220, 70, 'BACK', 3);
+
+    // Mode select screen controls (shown after clicking Start Game)
+    btn1Player = new TextButton(width / 2 - 160, 280, 280, 100, '1 PLAYER', 3);
+    btn2Players = new TextButton(width / 2 + 160, 280, 280, 100, '2 PLAYERS', 3);
+    btnModeBack = new TextButton(width / 2, 430, 220, 70, 'BACK', 3);
 }
 
 // The core game loop that delegates drawing based on the state machine
@@ -62,6 +69,8 @@ function draw() {
         drawStartScreen();
     } else if (gameState.screen === 'OPTIONS') {
         drawOptionsScreen();
+    } else if (gameState.screen === 'MODE_SELECT') {
+        drawModeSelectScreen();
     } else if (gameState.screen === 'TRANSITION') {
         drawTransition();
     } else if (gameState.screen === 'COUNTDOWN') {
@@ -77,10 +86,23 @@ function mousePressed() {
     // Handle clicks based on current state
     if (gameState.screen === 'START' && gameState.transitionAlpha <= 0) {
         if (btnStartGame.isHovered()) {
-            gameState.screen = 'TRANSITION'; // Trigger fade-out
+            gameState.screen = 'MODE_SELECT'; // Ask 1P or 2P before the fade-out
             playSound(assets.pointSound);
         } else if (btnOptions.isHovered()) {
             gameState.screen = 'OPTIONS';
+            playSound(assets.pointSound);
+        }
+    } else if (gameState.screen === 'MODE_SELECT') {
+        if (btn1Player.isHovered()) {
+            gameState.twoPlayerMode = false;
+            gameState.screen = 'TRANSITION';
+            playSound(assets.pointSound);
+        } else if (btn2Players.isHovered()) {
+            gameState.twoPlayerMode = true;
+            gameState.screen = 'TRANSITION';
+            playSound(assets.pointSound);
+        } else if (btnModeBack.isHovered()) {
+            gameState.screen = 'START';
             playSound(assets.pointSound);
         }
     } else if (gameState.screen === 'OPTIONS') {

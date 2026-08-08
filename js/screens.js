@@ -39,6 +39,21 @@ function drawOptionsScreen() {
     btnOptionsBack.draw();
 }
 
+function drawModeSelectScreen() {
+    // Same plain backdrop treatment as the Options screen for legibility
+    if (assets.imageBackground) image(assets.imageBackground, 0, 0, width, height);
+    else background(30);
+
+    fill(0, 170); noStroke(); rectMode(CORNER);
+    rect(0, 0, width, height);
+
+    drawTextCentered('SELECT MODE', width / 2, 70, 5);
+
+    btn1Player.draw();
+    btn2Players.draw();
+    btnModeBack.draw();
+}
+
 function drawTransition() {
     if (assets.imageStartScreen) image(assets.imageStartScreen, 0, 0, width, height);
     else background(30);
@@ -62,6 +77,7 @@ function drawTransition() {
 function drawCountdownScreen() {
     drawGameEnvironment(); // Draw static background and paddles
     player.update(); // Allow player to position their paddle before start
+    if (gameState.twoPlayerMode) computer.update(ball); // Let Player 2 position too
 
     // Fade-in to reveal the game board
     if (gameState.transitionAlpha > 0) {
@@ -123,15 +139,22 @@ function drawGameOverScreen() {
 
     // Determine Result Message
     let message = "DRAW!";
-    if (gameState.playerScore > gameState.computerScore) message = "YOU WIN!";
-    else if (gameState.computerScore > gameState.playerScore) message = "YOU LOSE!";
+    if (gameState.twoPlayerMode) {
+        if (gameState.playerScore > gameState.computerScore) message = "P1 WINS!";
+        else if (gameState.computerScore > gameState.playerScore) message = "P2 WINS!";
+    } else {
+        if (gameState.playerScore > gameState.computerScore) message = "YOU WIN!";
+        else if (gameState.computerScore > gameState.playerScore) message = "YOU LOSE!";
+    }
 
     drawTextCentered(message, width / 2, height / 2 - 60, 6);
     drawScoreboard();
 
-    // Career stats: win/loss/draw tally plus this profile's best-ever streak and score
-    drawTextCentered(`${stats.wins}W-${stats.losses}L-${stats.draws}D`, width / 2, height / 2 - 10, 3);
-    drawTextCentered(`STREAK ${stats.bestStreak} SCORE ${stats.bestScore}`, width / 2, height / 2 + 15, 3);
+    // Career stats are tracked against the AI, so only show them after 1-player matches
+    if (!gameState.twoPlayerMode) {
+        drawTextCentered(`${stats.wins}W-${stats.losses}L-${stats.draws}D`, width / 2, height / 2 - 10, 3);
+        drawTextCentered(`STREAK ${stats.bestStreak} SCORE ${stats.bestScore}`, width / 2, height / 2 + 15, 3);
+    }
 
     btnReplay.draw();
 }
@@ -174,7 +197,7 @@ function handleTimer() {
     // Check for 2-minute limit (only if not paused)
     if (totalSeconds >= 120 && !gameState.isPaused) {
         gameState.screen = 'GAME_OVER';
-        recordMatchStats();
+        if (!gameState.twoPlayerMode) recordMatchStats();
         return;
     }
 
