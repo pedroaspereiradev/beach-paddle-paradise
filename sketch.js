@@ -230,6 +230,10 @@ class ComputerPaddle extends Paddle {
     }
 }
 
+// Caps how fast rallies can get; without this the 5%-per-hit growth in
+// collideWithPaddle() compounds indefinitely and long volleys become unplayable.
+const MAX_BALL_SPEED = 14;
+
 /**
  * The Ball class handles movement, wall bouncing, and paddle collisions.
  */
@@ -275,8 +279,8 @@ class Ball {
             // Push ball out of paddle to prevent clipping
             this.x = isLeft ? paddleRight + this.radius : paddle.x - this.radius;
             
-            // Slightly increase speed on every hit for progression
-            const speed = Math.sqrt(this.speedX ** 2 + this.speedY ** 2) * 1.05;
+            // Slightly increase speed on every hit for progression, up to a playable cap
+            const speed = Math.min(Math.sqrt(this.speedX ** 2 + this.speedY ** 2) * 1.05, MAX_BALL_SPEED);
             
             // Calculate new velocity vectors based on the bounce angle
             this.speedX = (isLeft ? 1 : -1) * speed * Math.cos(bounceAngle);
