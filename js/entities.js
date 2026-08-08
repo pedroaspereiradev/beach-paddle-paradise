@@ -11,16 +11,41 @@ class Paddle {
 
         // Scaled up by 1.4x (original was 10x60)
         this.width = 14;
-        this.height = 84;
+        this.baseHeight = 84;
+        this.height = this.baseHeight;
 
         // Centers the paddle vertically
         this.y = height / 2 - this.height / 2;
         this.img = imageRef;
+
+        this.growFramesLeft = 0; // Frames left on an active GROW power-up, if any
     }
 
     // Prevents the paddle from moving off-screen
     constrainBounds() {
         this.y = constrain(this.y, 0, height - this.height);
+    }
+
+    // Changes height while keeping the paddle's vertical center fixed,
+    // so growing/shrinking doesn't make it jump up or down.
+    setHeight(newHeight) {
+        const center = this.y + this.height / 2;
+        this.height = newHeight;
+        this.y = center - this.height / 2;
+    }
+
+    applyGrow(frames) {
+        this.growFramesLeft = frames;
+        this.setHeight(this.baseHeight * POWERUP_GROW_MULTIPLIER);
+    }
+
+    // Counts down an active GROW buff and reverts the height once it expires.
+    // Called from each subclass's update() so it only ticks while gameplay is running.
+    updateGrowTimer() {
+        if (this.growFramesLeft > 0) {
+            this.growFramesLeft--;
+            if (this.growFramesLeft === 0) this.setHeight(this.baseHeight);
+        }
     }
 
     draw() {
@@ -59,6 +84,7 @@ class PlayerPaddle extends Paddle {
                 this.y = mouseY - this.height / 2;
             }
         }
+        this.updateGrowTimer();
         this.constrainBounds();
     }
 }
@@ -81,6 +107,7 @@ class OpponentPaddle extends Paddle {
             // Limits the AI speed to make it beatable, tuned by the Options difficulty setting
             if (abs(distance) > 2) this.y += constrain(distance * reaction, -maxSpeed, maxSpeed);
         }
+        this.updateGrowTimer();
         this.constrainBounds();
     }
 }
@@ -106,6 +133,11 @@ class Ball {
         this.speedX = random([-5, 5]); // Guarantees it doesn't move perfectly vertical
         this.speedY = random(-4, 4);
         this.angle = 0; // Used for rotation rendering
+        this.lastHitBy = null; // 'player' or 'computer'; whoever collects a power-up next benefits
+
+        // A stray, uncollected power-up shouldn't survive into the next rally
+        activePowerUp = null;
+        powerUpSpawnTimer = POWERUP_SPAWN_INTERVAL;
     }
 
     /**
@@ -141,6 +173,7 @@ class Ball {
             this.speedX = (isLeft ? 1 : -1) * speed * Math.cos(bounceAngle);
             this.speedY = speed * Math.sin(bounceAngle);
             this.angle = atan2(this.speedY, this.speedX); // Adjust sprite rotation
+            this.lastHitBy = isLeft ? 'player' : 'computer';
 
             spawnParticles(this.x, this.y, 6, SPLASH_COLORS);
             playSound(assets.bounceSound);

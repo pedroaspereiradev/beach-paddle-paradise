@@ -72,6 +72,7 @@ function drawTransition() {
         computer.y = height / 2 - computer.height / 2;
         resetMatchStats();
         resetParticles();
+        resetPowerUps();
     }
 }
 
@@ -112,8 +113,10 @@ function drawGameScreen() {
         player.update();
         computer.update(ball);
         updateParticles();
+        updatePowerUp();
     }
     drawParticles(); // Drawn separately so particles stay visible (frozen) while paused
+    drawPowerUp();
 
     drawScoreboard();
     handleTimer(); // Timer logic handles its own pause state internally

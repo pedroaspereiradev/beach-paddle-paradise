@@ -161,6 +161,7 @@ function mousePressed() {
             gameState.isPaused = false; // Ensure game doesn't restart paused
             resetMatchStats();
             resetParticles();
+            resetPowerUps();
             playSound(assets.pointSound);
         }
     }
