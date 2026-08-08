@@ -192,12 +192,25 @@ class Paddle {
     }
 }
 
+// Pixels moved per frame when steering with the keyboard instead of the mouse
+const PLAYER_KEYBOARD_SPEED = 7;
+
 /**
- * Player Paddle: Controlled by the mouse Y position.
+ * Player Paddle: Controlled by the mouse Y position, or the Up/Down arrow
+ * keys and W/S as an alternative. Keyboard input takes over for the frame
+ * it's held so the two schemes never fight over the paddle's position.
  */
 class PlayerPaddle extends Paddle {
     update() {
-        this.y = mouseY - this.height / 2;
+        const movingUp = keyIsDown(UP_ARROW) || keyIsDown(87); // W
+        const movingDown = keyIsDown(DOWN_ARROW) || keyIsDown(83); // S
+
+        if (movingUp || movingDown) {
+            if (movingUp) this.y -= PLAYER_KEYBOARD_SPEED;
+            if (movingDown) this.y += PLAYER_KEYBOARD_SPEED;
+        } else {
+            this.y = mouseY - this.height / 2;
+        }
         this.constrainBounds();
     }
 }
