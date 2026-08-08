@@ -58,6 +58,47 @@ const pixelFont = {
 };
 
 // ==========================================
+// --- SETTINGS (PERSISTED VIA localStorage) ---
+// ==========================================
+
+const SETTINGS_STORAGE_KEY = 'beachPaddleParadise.settings';
+
+const settings = {
+    soundOn: true,
+    aiDifficulty: 'MEDIUM' // One of: 'EASY', 'MEDIUM', 'HARD'
+};
+
+// Tuning knobs consumed by ComputerPaddle.update() - reaction is the steering
+// factor applied to the distance-to-ball, maxSpeed caps pixels moved per frame.
+const AI_DIFFICULTY = {
+    EASY: { reaction: 0.08, maxSpeed: 3 },
+    MEDIUM: { reaction: 0.12, maxSpeed: 4 }, // Matches the original, pre-Options behavior
+    HARD: { reaction: 0.18, maxSpeed: 6 }
+};
+
+function loadSettings() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY));
+        if (saved) Object.assign(settings, saved);
+    } catch (e) {
+        // Corrupted or inaccessible storage (e.g. private browsing) - defaults are used instead.
+    }
+}
+
+function saveSettings() {
+    try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    } catch (e) {
+        // Storage might be unavailable - settings just won't persist across sessions.
+    }
+}
+
+// Central helper so every UI/gameplay sound respects the Options mute toggle.
+function playSound(sound) {
+    if (settings.soundOn && sound) sound.play();
+}
+
+// ==========================================
 // --- GAME ENTITIES (CLASSES) ---
 // ==========================================
 
@@ -107,11 +148,12 @@ class PlayerPaddle extends Paddle {
  */
 class ComputerPaddle extends Paddle {
     update(ball) {
+        const { reaction, maxSpeed } = AI_DIFFICULTY[settings.aiDifficulty];
         const targetY = ball.y - this.height / 2; // AI tries to hit with the center of the paddle
         const distance = targetY - this.y;
-        
-        // Limits the AI speed to make it beatable (max 4 pixels per frame)
-        if (abs(distance) > 2) this.y += constrain(distance * 0.12, -4, 4);
+
+        // Limits the AI speed to make it beatable, tuned by the Options difficulty setting
+        if (abs(distance) > 2) this.y += constrain(distance * reaction, -maxSpeed, maxSpeed);
         this.constrainBounds();
     }
 }
@@ -169,7 +211,7 @@ class Ball {
             this.speedY = speed * Math.sin(bounceAngle);
             this.angle = atan2(this.speedY, this.speedX); // Adjust sprite rotation
 
-            if (assets.bounceSound) assets.bounceSound.play();
+            playSound(assets.bounceSound);
         }
     }
     
@@ -184,8 +226,8 @@ class Ball {
         if (this.x + this.radius > width || this.x - this.radius < 0) {
             if (this.x + this.radius > width) gameState.playerScore++;
             else gameState.computerScore++;
-            
-            if (assets.pointSound) assets.pointSound.play();
+
+            playSound(assets.pointSound);
             this.reset();
         }
         
@@ -322,12 +364,41 @@ class StopButton {
     }
 }
 
+/**
+ * Bordered button with a pixel-font text label, used throughout the Options screen.
+ * `label` can be reassigned between frames (e.g. to reflect the current sound state).
+ */
+class TextButton {
+    constructor(x, y, w, h, label, scale = 3) {
+        this.x = x; this.y = y; this.w = w; this.h = h;
+        this.label = label; this.scale = scale;
+    }
+    isHovered() {
+        return mouseX > this.x - this.w / 2 && mouseX < this.x + this.w / 2 &&
+               mouseY > this.y - this.h / 2 && mouseY < this.y + this.h / 2;
+    }
+    // `active` highlights the button as the currently selected option
+    draw(active = false) {
+        push(); rectMode(CENTER); noStroke();
+        if (active) fill(255, 200, 80, 210);
+        else fill(255, 255, 255, this.isHovered() ? 60 : 30);
+        rect(this.x, this.y, this.w, this.h, 8);
+        pop();
+
+        if (this.isHovered()) cursor(HAND);
+
+        const charHeight = this.scale * 5;
+        drawTextCentered(this.label, this.x, this.y - charHeight / 2, this.scale);
+    }
+}
+
 // ==========================================
 // --- GLOBALS & P5.JS LIFECYCLE ---
 // ==========================================
 
 let ball, player, computer;
 let btnStartGame, btnOptions, btnReplay, btnPause, btnStop;
+let btnSound, btnEasy, btnMedium, btnHard, btnOptionsBack;
 
 function preload() {
     assets.imageBall = loadImage('assets/bola.png');
@@ -341,10 +412,12 @@ function preload() {
 }
 
 function setup() {
+    loadSettings(); // Restore sound/AI difficulty preferences saved from a previous visit
+
     // Increase canvas size by 40% (maintaining the exact 1.75 aspect ratio of the background)
     // Resolution: 980x560
     createCanvas(980, 560);
-    
+
     // Scale ball diameter by 1.4x (original was 40)
     ball = new Ball(56); 
     
@@ -364,7 +437,14 @@ function setup() {
     btnPause = new PausePlayButton(width - 49, 49, 56); 
     
     // Moved closer to the Pause button (from width - 119 to width - 110)
-    btnStop = new StopButton(width - 110, 49, 56); 
+    btnStop = new StopButton(width - 110, 49, 56);
+
+    // Options screen controls (label text is set dynamically for btnSound in drawOptionsScreen)
+    btnSound = new TextButton(width / 2, 190, 320, 70, '', 3);
+    btnEasy = new TextButton(width / 2 - 260, 350, 220, 70, 'EASY', 3);
+    btnMedium = new TextButton(width / 2, 350, 220, 70, 'MEDIUM', 3);
+    btnHard = new TextButton(width / 2 + 260, 350, 220, 70, 'HARD', 3);
+    btnOptionsBack = new TextButton(width / 2, 470, 220, 70, 'BACK', 3);
 }
 
 // The core game loop that delegates drawing based on the state machine
@@ -373,6 +453,8 @@ function draw() {
 
     if (gameState.screen === 'START') {
         drawStartScreen();
+    } else if (gameState.screen === 'OPTIONS') {
+        drawOptionsScreen();
     } else if (gameState.screen === 'TRANSITION') {
         drawTransition();
     } else if (gameState.screen === 'COUNTDOWN') {
@@ -389,7 +471,31 @@ function mousePressed() {
     if (gameState.screen === 'START' && gameState.transitionAlpha <= 0) {
         if (btnStartGame.isHovered()) {
             gameState.screen = 'TRANSITION'; // Trigger fade-out
-            if (assets.pointSound) assets.pointSound.play();
+            playSound(assets.pointSound);
+        } else if (btnOptions.isHovered()) {
+            gameState.screen = 'OPTIONS';
+            playSound(assets.pointSound);
+        }
+    } else if (gameState.screen === 'OPTIONS') {
+        if (btnSound.isHovered()) {
+            settings.soundOn = !settings.soundOn;
+            saveSettings();
+            playSound(assets.pointSound);
+        } else if (btnEasy.isHovered()) {
+            settings.aiDifficulty = 'EASY';
+            saveSettings();
+            playSound(assets.pointSound);
+        } else if (btnMedium.isHovered()) {
+            settings.aiDifficulty = 'MEDIUM';
+            saveSettings();
+            playSound(assets.pointSound);
+        } else if (btnHard.isHovered()) {
+            settings.aiDifficulty = 'HARD';
+            saveSettings();
+            playSound(assets.pointSound);
+        } else if (btnOptionsBack.isHovered()) {
+            gameState.screen = 'START';
+            playSound(assets.pointSound);
         }
     } else if (gameState.screen === 'PLAYING') {
         if (btnStop.isHovered()) {
@@ -397,34 +503,34 @@ function mousePressed() {
             gameState.screen = 'START';
             gameState.isPaused = false;
             gameState.transitionAlpha = 255; // Triggers the beautiful fade-in effect again
-            
+
             // Reset scores so the next game starts fresh
             gameState.playerScore = 0;
             gameState.computerScore = 0;
-            
-            if (assets.pointSound) assets.pointSound.play();
+
+            playSound(assets.pointSound);
         } else if (btnPause.isHovered()) {
             gameState.isPaused = !gameState.isPaused;
-            
+
             if (gameState.isPaused) {
                 // Save the exact timestamp the game was paused
-                gameState.pauseStartTime = millis(); 
+                gameState.pauseStartTime = millis();
             } else {
-                // Add the time spent paused to the overall startTime 
+                // Add the time spent paused to the overall startTime
                 // so the timer doesn't jump forward when unpaused.
                 const timeSpentPaused = millis() - gameState.pauseStartTime;
-                gameState.startTime += timeSpentPaused; 
+                gameState.startTime += timeSpentPaused;
             }
-            if (assets.pointSound) assets.pointSound.play();
+            playSound(assets.pointSound);
         }
     } else if (gameState.screen === 'GAME_OVER') {
         if (btnReplay.isHovered()) {
-            gameState.screen = 'COUNTDOWN'; 
+            gameState.screen = 'COUNTDOWN';
             gameState.countdownStartTime = millis();
             gameState.playerScore = 0;
             gameState.computerScore = 0;
             gameState.isPaused = false; // Ensure game doesn't restart paused
-            if (assets.pointSound) assets.pointSound.play();
+            playSound(assets.pointSound);
         }
     }
 }
@@ -444,8 +550,30 @@ function drawStartScreen() {
     if (gameState.transitionAlpha > 0) {
         fill(0, gameState.transitionAlpha); noStroke();
         rect(0, 0, width, height);
-        gameState.transitionAlpha -= 5; 
+        gameState.transitionAlpha -= 5;
     }
+}
+
+function drawOptionsScreen() {
+    // Uses the plain beach backdrop (not the title screen art, which has its
+    // own baked-in text) so the menu stays readable against a calm background.
+    if (assets.imageBackground) image(assets.imageBackground, 0, 0, width, height);
+    else background(30);
+
+    fill(0, 170); noStroke(); rectMode(CORNER);
+    rect(0, 0, width, height);
+
+    drawTextCentered('OPTIONS', width / 2, 60, 6);
+
+    btnSound.label = settings.soundOn ? 'SOUND: ON' : 'SOUND: OFF';
+    btnSound.draw(settings.soundOn);
+
+    drawTextCentered('LEVEL', width / 2, 290, 3);
+    btnEasy.draw(settings.aiDifficulty === 'EASY');
+    btnMedium.draw(settings.aiDifficulty === 'MEDIUM');
+    btnHard.draw(settings.aiDifficulty === 'HARD');
+
+    btnOptionsBack.draw();
 }
 
 function drawTransition() {
