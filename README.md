@@ -9,7 +9,7 @@ A retro arcade game inspired by the classic Pong, but with a tropical beach vibe
 * **1 or 2 Player Modes:** Challenge an AI that actively tracks the ball (three difficulty levels), or play locally against a friend.
 * **Complete State Machine:** Smooth transitions between the Start Screen, Options, Mode Select, Countdown, Gameplay, and Game Over states.
 * **Advanced Arcade Physics:** The ball's speed gradually increases (up to a capped max) on every hit, and its angle changes depending on where it hits the paddle.
-* **Power-Ups:** An orb occasionally appears mid-rally - hit it to temporarily grow your paddle or slow the ball down.
+* **Power-Ups:** An orb occasionally appears mid-rally - hit it (after touching the ball last) to temporarily grow your paddle or send the ball rocketing at your opponent.
 * **Particle Effects:** A splash on every paddle hit and a confetti burst on every point scored.
 * **Custom UI and Font System:** Interactive hitboxes and a system that renders a pixelated font (3x5) with perfectly adjusted borders, drawn block by block via code.
 * **Mouse or Keyboard Controls:** Move the paddle with the mouse, or the Up/Down arrow keys and W/S (2P uses W/S for Player 1 and the arrow keys for Player 2).
@@ -68,7 +68,7 @@ beach-paddle-paradise/
 │   ├── pixel-font.js  # The custom 3x5 pixel font and its text-drawing helpers
 │   ├── state.js       # Game state, persisted settings, and match/career stats
 │   ├── particles.js   # Splash/confetti particle effects
-│   ├── powerups.js    # The paddle-grow and ball-slow power-up orb
+│   ├── powerups.js    # The paddle-grow and ball-boost power-up orb
 │   ├── entities.js    # Paddle, Ball, and their subclasses
 │   ├── ui.js          # Buttons and hitboxes
 │   ├── screens.js     # One render function per screen of the state machine

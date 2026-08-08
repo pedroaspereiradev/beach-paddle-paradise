@@ -3,15 +3,16 @@
 // ==========================================
 // A single power-up orb spawns periodically during a rally. Whichever paddle
 // last touched the ball (Ball.lastHitBy) gets the benefit if the ball then
-// touches the orb - GROW makes that paddle 50% taller for a few seconds,
-// SLOW cuts the ball's current speed. Only one orb is active at a time.
+// touches the orb - GROW makes that paddle 50% bigger for a few seconds,
+// BOOST speeds the ball up so the opponent has less time to react. Only one
+// orb is active at a time.
 
-const POWERUP_TYPES = ['GROW', 'SLOW'];
+const POWERUP_TYPES = ['GROW', 'BOOST'];
 const POWERUP_RADIUS = 18;
 const POWERUP_SPAWN_INTERVAL = 480; // ~8s at 60fps between orbs
 const POWERUP_GROW_DURATION = 360; // ~6s at 60fps
 const POWERUP_GROW_MULTIPLIER = 1.5;
-const POWERUP_SLOW_FACTOR = 0.55;
+const POWERUP_BOOST_FACTOR = 1.8; // Applied to the ball's current speed, still capped at MAX_BALL_SPEED
 
 let activePowerUp = null;
 let powerUpSpawnTimer = POWERUP_SPAWN_INTERVAL;
@@ -28,7 +29,7 @@ class PowerUp {
     draw() {
         // Gentle pulse so it reads as "alive" against the static background
         const pulse = 1 + 0.15 * sin((frameCount - this.spawnFrame) * 0.12);
-        const baseColor = this.type === 'GROW' ? [120, 220, 130] : [120, 190, 255];
+        const baseColor = this.type === 'GROW' ? [120, 220, 130] : [255, 140, 70];
 
         push();
         noStroke();
@@ -54,9 +55,15 @@ function applyPowerUp(powerUp) {
 
     if (powerUp.type === 'GROW') {
         beneficiary.applyGrow(POWERUP_GROW_DURATION);
-    } else if (powerUp.type === 'SLOW') {
-        ball.speedX *= POWERUP_SLOW_FACTOR;
-        ball.speedY *= POWERUP_SLOW_FACTOR;
+    } else if (powerUp.type === 'BOOST') {
+        // Scale the current velocity vector up (preserving direction) rather
+        // than setting a fixed speed, so a boost right after a paddle hit
+        // still respects the angle that hit produced.
+        const currentSpeed = Math.sqrt(ball.speedX ** 2 + ball.speedY ** 2);
+        const boostedSpeed = Math.min(currentSpeed * POWERUP_BOOST_FACTOR, MAX_BALL_SPEED);
+        const scale = boostedSpeed / currentSpeed;
+        ball.speedX *= scale;
+        ball.speedY *= scale;
     }
 }
 
@@ -65,7 +72,7 @@ function checkPowerUpCollision() {
 
     const d = dist(ball.x, ball.y, activePowerUp.x, activePowerUp.y);
     if (d < ball.radius + activePowerUp.radius) {
-        const colorPalette = activePowerUp.type === 'GROW' ? [[120, 220, 130]] : [[120, 190, 255]];
+        const colorPalette = activePowerUp.type === 'GROW' ? [[120, 220, 130]] : [[255, 140, 70]];
         spawnParticles(activePowerUp.x, activePowerUp.y, 12, colorPalette);
 
         applyPowerUp(activePowerUp);
