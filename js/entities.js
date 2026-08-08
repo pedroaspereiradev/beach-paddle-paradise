@@ -142,6 +142,7 @@ class Ball {
             this.speedY = speed * Math.sin(bounceAngle);
             this.angle = atan2(this.speedY, this.speedX); // Adjust sprite rotation
 
+            spawnParticles(this.x, this.y, 6, SPLASH_COLORS);
             playSound(assets.bounceSound);
         }
     }
@@ -164,6 +165,7 @@ class Ball {
                 gameState.currentStreak = 0;
             }
 
+            spawnParticles(this.x, this.y, 16, CONFETTI_COLORS);
             playSound(assets.pointSound);
             this.reset();
         }

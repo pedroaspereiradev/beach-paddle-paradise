@@ -71,6 +71,7 @@ function drawTransition() {
         player.y = height / 2 - player.height / 2;
         computer.y = height / 2 - computer.height / 2;
         resetMatchStats();
+        resetParticles();
     }
 }
 
@@ -102,7 +103,6 @@ function drawCountdownScreen() {
 
 function drawGameScreen() {
     drawGameEnvironment();
-    drawScoreboard();
 
     // Only update physics and logic if NOT paused
     if (!gameState.isPaused) {
@@ -111,8 +111,11 @@ function drawGameScreen() {
         ball.collideWithPaddle(computer);
         player.update();
         computer.update(ball);
+        updateParticles();
     }
+    drawParticles(); // Drawn separately so particles stay visible (frozen) while paused
 
+    drawScoreboard();
     handleTimer(); // Timer logic handles its own pause state internally
 
     // Pause Overlay Effect

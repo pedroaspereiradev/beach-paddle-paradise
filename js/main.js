@@ -160,6 +160,7 @@ function mousePressed() {
             gameState.computerScore = 0;
             gameState.isPaused = false; // Ensure game doesn't restart paused
             resetMatchStats();
+            resetParticles();
             playSound(assets.pointSound);
         }
     }
