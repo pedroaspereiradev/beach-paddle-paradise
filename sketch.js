@@ -286,10 +286,6 @@ class PausePlayButton {
  * Stop button drawn using the custom pixel font system.
  * Returns the player to the Start Screen.
  */
-/**
- * Stop button drawn using the custom pixel font system.
- * Returns the player to the Start Screen.
- */
 class StopButton {
     constructor(x, y, size) {
         this.x = x; this.y = y; this.size = size;
