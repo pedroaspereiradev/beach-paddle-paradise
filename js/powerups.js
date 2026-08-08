@@ -94,7 +94,7 @@ function drawPowerUp() {
 // cleared by Ball.reset(), so this only needs to undo a lingering GROW buff.
 function resetPowerUps() {
     player.growFramesLeft = 0;
-    player.setHeight(player.baseHeight);
+    player.setSize(player.baseHeight);
     computer.growFramesLeft = 0;
-    computer.setHeight(computer.baseHeight);
+    computer.setSize(computer.baseHeight);
 }

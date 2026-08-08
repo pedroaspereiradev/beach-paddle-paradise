@@ -10,7 +10,8 @@ class Paddle {
         this.x = x;
 
         // Scaled up by 1.4x (original was 10x60)
-        this.width = 14;
+        this.baseWidth = 14;
+        this.width = this.baseWidth;
         this.baseHeight = 84;
         this.height = this.baseHeight;
 
@@ -26,25 +27,32 @@ class Paddle {
         this.y = constrain(this.y, 0, height - this.height);
     }
 
-    // Changes height while keeping the paddle's vertical center fixed,
-    // so growing/shrinking doesn't make it jump up or down.
-    setHeight(newHeight) {
-        const center = this.y + this.height / 2;
+    // Scales both height AND width together (matching the sprite's aspect
+    // ratio) around the paddle's current center, so growing/shrinking never
+    // stretches the image or shifts the paddle up/down/sideways.
+    setSize(newHeight) {
+        const centerX = this.x + this.width / 2;
+        const centerY = this.y + this.height / 2;
+        const scale = newHeight / this.baseHeight;
+
         this.height = newHeight;
-        this.y = center - this.height / 2;
+        this.width = this.baseWidth * scale;
+
+        this.x = centerX - this.width / 2;
+        this.y = centerY - this.height / 2;
     }
 
     applyGrow(frames) {
         this.growFramesLeft = frames;
-        this.setHeight(this.baseHeight * POWERUP_GROW_MULTIPLIER);
+        this.setSize(this.baseHeight * POWERUP_GROW_MULTIPLIER);
     }
 
-    // Counts down an active GROW buff and reverts the height once it expires.
+    // Counts down an active GROW buff and reverts the size once it expires.
     // Called from each subclass's update() so it only ticks while gameplay is running.
     updateGrowTimer() {
         if (this.growFramesLeft > 0) {
             this.growFramesLeft--;
-            if (this.growFramesLeft === 0) this.setHeight(this.baseHeight);
+            if (this.growFramesLeft === 0) this.setSize(this.baseHeight);
         }
     }
 
