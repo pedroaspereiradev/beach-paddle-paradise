@@ -18,7 +18,12 @@ const gameState = {
     
     // Pause system variables
     isPaused: false,
-    pauseStartTime: 0 // Records the exact moment the game was paused to adjust the main timer later
+    pauseStartTime: 0, // Records the exact moment the game was paused to adjust the main timer later
+
+    // Per-match stat tracking (reset every time a new match starts)
+    currentStreak: 0, // Consecutive points scored by the player without the opponent scoring
+    longestStreakThisMatch: 0,
+    statsRecorded: false // Guards against recording the same finished match more than once
 };
 
 // ==========================================
@@ -96,6 +101,60 @@ function saveSettings() {
 // Central helper so every UI/gameplay sound respects the Options mute toggle.
 function playSound(sound) {
     if (settings.soundOn && sound) sound.play();
+}
+
+// ==========================================
+// --- MATCH STATS (PERSISTED VIA localStorage) ---
+// ==========================================
+
+const STATS_STORAGE_KEY = 'beachPaddleParadise.stats';
+
+const stats = {
+    wins: 0,
+    losses: 0,
+    draws: 0,
+    bestStreak: 0,
+    bestScore: 0
+};
+
+function loadStats() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(STATS_STORAGE_KEY));
+        if (saved) Object.assign(stats, saved);
+    } catch (e) {
+        // Corrupted or inaccessible storage - stats simply start fresh.
+    }
+}
+
+function saveStats() {
+    try {
+        localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(stats));
+    } catch (e) {
+        // Storage might be unavailable - stats just won't persist across sessions.
+    }
+}
+
+// Resets the per-match counters; called whenever a new match is about to begin.
+function resetMatchStats() {
+    gameState.currentStreak = 0;
+    gameState.longestStreakThisMatch = 0;
+    gameState.statsRecorded = false;
+}
+
+// Folds the just-finished match into the all-time stats. Safe to call every
+// frame the Game Over screen is drawn - `statsRecorded` makes it a no-op after the first time.
+function recordMatchStats() {
+    if (gameState.statsRecorded) return;
+
+    if (gameState.playerScore > gameState.computerScore) stats.wins++;
+    else if (gameState.computerScore > gameState.playerScore) stats.losses++;
+    else stats.draws++;
+
+    stats.bestStreak = max(stats.bestStreak, gameState.longestStreakThisMatch);
+    stats.bestScore = max(stats.bestScore, gameState.playerScore);
+
+    saveStats();
+    gameState.statsRecorded = true;
 }
 
 // ==========================================
@@ -224,8 +283,14 @@ class Ball {
 
         // Check for Left/Right bounds (Scoring)
         if (this.x + this.radius > width || this.x - this.radius < 0) {
-            if (this.x + this.radius > width) gameState.playerScore++;
-            else gameState.computerScore++;
+            if (this.x + this.radius > width) {
+                gameState.playerScore++;
+                gameState.currentStreak++;
+                gameState.longestStreakThisMatch = max(gameState.longestStreakThisMatch, gameState.currentStreak);
+            } else {
+                gameState.computerScore++;
+                gameState.currentStreak = 0;
+            }
 
             playSound(assets.pointSound);
             this.reset();
@@ -413,6 +478,7 @@ function preload() {
 
 function setup() {
     loadSettings(); // Restore sound/AI difficulty preferences saved from a previous visit
+    loadStats(); // Restore career wins/losses/draws and best-of records
 
     // Increase canvas size by 40% (maintaining the exact 1.75 aspect ratio of the background)
     // Resolution: 980x560
@@ -530,6 +596,7 @@ function mousePressed() {
             gameState.playerScore = 0;
             gameState.computerScore = 0;
             gameState.isPaused = false; // Ensure game doesn't restart paused
+            resetMatchStats();
             playSound(assets.pointSound);
         }
     }
@@ -589,9 +656,10 @@ function drawTransition() {
     if (gameState.transitionAlpha >= 255) {
         gameState.screen = 'COUNTDOWN';
         gameState.countdownStartTime = millis();
-        ball.reset(); 
-        player.y = height / 2 - player.height / 2; 
+        ball.reset();
+        player.y = height / 2 - player.height / 2;
         computer.y = height / 2 - computer.height / 2;
+        resetMatchStats();
     }
 }
 
@@ -663,7 +731,11 @@ function drawGameOverScreen() {
     else if (gameState.computerScore > gameState.playerScore) message = "YOU LOSE!";
 
     drawTextCentered(message, width / 2, height / 2 - 60, 6);
-    drawScoreboard(); 
+    drawScoreboard();
+
+    // Career stats: win/loss/draw tally plus this profile's best-ever streak and score
+    drawTextCentered(`${stats.wins}W-${stats.losses}L-${stats.draws}D`, width / 2, height / 2 - 10, 3);
+    drawTextCentered(`STREAK ${stats.bestStreak} SCORE ${stats.bestScore}`, width / 2, height / 2 + 15, 3);
 
     btnReplay.draw();
 }
@@ -705,8 +777,9 @@ function handleTimer() {
     
     // Check for 2-minute limit (only if not paused)
     if (totalSeconds >= 120 && !gameState.isPaused) {
-        gameState.screen = 'GAME_OVER'; 
-        return; 
+        gameState.screen = 'GAME_OVER';
+        recordMatchStats();
+        return;
     }
     
     // Format mm:ss and draw
