@@ -2,6 +2,8 @@
 
 ![Beach Paddle Paradise](assets/tela-inicial.png)
 
+### 🎮 [Play Now](https://pedroaspereiradev.github.io/beach-paddle-paradise/)
+
 A retro arcade game inspired by the classic Pong, but with a tropical beach vibe! Play solo against an AI opponent or head-to-head with a friend, in dynamic and fun 2-minute matches. Developed purely with JavaScript and the **p5.js** library.
 
 ## ✨ Features
