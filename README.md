@@ -1,6 +1,6 @@
 # 🏖️ Beach Paddle Paradise
 
-![Beach Paddle Paradise](assets/tela-inicial.png)
+![Beach Paddle Paradise gameplay demo](assets/gameplay-demo.gif)
 
 ### 🎮 [Play Now](https://pedroaspereiradev.github.io/beach-paddle-paradise/)
 
