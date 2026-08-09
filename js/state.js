@@ -24,7 +24,8 @@ const gameState = {
     // Per-match stat tracking (reset every time a new match starts)
     currentStreak: 0, // Consecutive points scored by the player without the opponent scoring
     longestStreakThisMatch: 0,
-    statsRecorded: false // Guards against recording the same finished match more than once
+    statsRecorded: false, // Guards against recording the same finished match more than once
+    gameOverSoundPlayed: false // Guards against replaying the result jingle every redrawn frame
 };
 
 // ==========================================
@@ -104,6 +105,7 @@ function resetMatchStats() {
     gameState.currentStreak = 0;
     gameState.longestStreakThisMatch = 0;
     gameState.statsRecorded = false;
+    gameState.gameOverSoundPlayed = false;
 }
 
 // Folds the just-finished match into the all-time stats. Safe to call every

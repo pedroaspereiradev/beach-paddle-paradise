@@ -74,6 +74,7 @@ function checkPowerUpCollision() {
     if (d < ball.radius + activePowerUp.radius) {
         const colorPalette = activePowerUp.type === 'GROW' ? [[120, 220, 130]] : [[255, 140, 70]];
         spawnParticles(activePowerUp.x, activePowerUp.y, 12, colorPalette);
+        playPowerUpChime();
 
         applyPowerUp(activePowerUp);
         activePowerUp = null;

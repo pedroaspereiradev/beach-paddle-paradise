@@ -204,6 +204,13 @@ function handleTimer() {
     if (totalSeconds >= 120 && !gameState.isPaused) {
         gameState.screen = 'GAME_OVER';
         if (!gameState.twoPlayerMode) recordMatchStats();
+
+        if (!gameState.gameOverSoundPlayed) {
+            if (gameState.playerScore !== gameState.computerScore) {
+                playResultJingle(gameState.playerScore > gameState.computerScore);
+            }
+            gameState.gameOverSoundPlayed = true;
+        }
         return;
     }
 
