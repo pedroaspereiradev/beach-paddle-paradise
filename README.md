@@ -14,12 +14,12 @@ A retro arcade game inspired by the classic Pong, but with a tropical beach vibe
 * **Power-Ups:** An orb occasionally appears mid-rally - hit it (after touching the ball last) to temporarily grow your paddle or send the ball rocketing at your opponent.
 * **Particle Effects:** A splash on every paddle hit and a confetti burst on every point scored.
 * **Custom UI and Font System:** Interactive hitboxes and a system that renders a pixelated font (3x5) with perfectly adjusted borders, drawn block by block via code.
-* **Mouse or Keyboard Controls:** Move the paddle with the mouse, or the Up/Down arrow keys and W/S (2P uses W/S for Player 1 and the arrow keys for Player 2).
+* **Mouse, Keyboard, or Touch Controls:** Move the paddle with the mouse, the Up/Down arrow keys and W/S, or a finger on mobile (2P uses W/S for Player 1 and the arrow keys/right half of the screen for Player 2). The canvas scales to fit the screen on phones.
 * **Options Menu:** Mute sound effects and pick the AI difficulty; preferences persist across sessions.
 * **Career Stats:** Wins/losses/draws, best point streak, and best score against the AI, saved locally and shown after each 1-player match.
 * **Pause/Resume and Stop:** Pause the match at any time without losing track of the timer, or stop and return to the start screen.
 * **Win Condition:** Matches with a strict 2-minute (120 seconds) time limit, declaring the winner at the end of the countdown.
-* **Audiovisual Feedback:** Sound effects for hits and scoring, plus buttons with hover animations.
+* **Audiovisual Feedback:** Sound effects for hits, scoring, power-ups, and the match result (synthesized in code, no extra audio files), plus buttons with hover animations.
 
 ## 🚀 Technologies Used
 
@@ -32,7 +32,7 @@ A retro arcade game inspired by the classic Pong, but with a tropical beach vibe
 1. Click **START** on the initial screen (or **OPTIONS** to toggle sound and AI difficulty first).
 2. Choose **1 PLAYER** (vs AI) or **2 PLAYERS** (local multiplayer).
 3. Wait for the 3-second countdown.
-4. Control your paddle with the **Mouse** (1P only), or **W-S** (Player 1) / **Up-Down arrows** (Player 2, or 1P's alternate control).
+4. Control your paddle with the **Mouse** (1P only), **W-S** (Player 1) / **Up-Down arrows** (Player 2, or 1P's alternate control), or by dragging a finger on **touchscreens**.
 5. Get the ball past the opponent's paddle to score points. Grab the power-up orb when it appears for a temporary edge!
 6. The game ends after exactly 2 minutes. Whoever has the most points wins!
 7. Click the **Replay** button to play again.
@@ -69,6 +69,7 @@ beach-paddle-paradise/
 ├── js/
 │   ├── pixel-font.js  # The custom 3x5 pixel font and its text-drawing helpers
 │   ├── state.js       # Game state, persisted settings, and match/career stats
+│   ├── audio-fx.js    # Synthesized power-up and match-result sound cues
 │   ├── particles.js   # Splash/confetti particle effects
 │   ├── powerups.js    # The paddle-grow and ball-boost power-up orb
 │   ├── entities.js    # Paddle, Ball, and their subclasses
