@@ -166,3 +166,24 @@ function mousePressed() {
         }
     }
 }
+
+// p5 auto-simulates mouse events (and keeps mouseX/mouseY in sync) from a
+// single touch, so buttons and 1-player paddle dragging already work through
+// the mouse handlers above. Forwarding taps here just makes that explicit and
+// prevents the default double-tap-to-zoom/scroll behavior on mobile.
+function touchStarted() {
+    mousePressed();
+    return false;
+}
+
+// Only needed for 2-player mode, where two fingers must control two paddles
+// at once - something the single simulated mouse pointer can't represent.
+function touchMoved() {
+    if (gameState.screen === 'PLAYING' && gameState.twoPlayerMode) {
+        for (const t of touches) {
+            if (t.x < width / 2) player.y = t.y - player.height / 2;
+            else computer.y = t.y - computer.height / 2;
+        }
+    }
+    return false; // Stops the page from scrolling/bouncing while dragging on the canvas
+}
